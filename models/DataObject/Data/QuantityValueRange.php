@@ -64,12 +64,29 @@ class QuantityValueRange extends AbstractQuantityValue
         $this->markMeDirty();
     }
 
-    public function getRange(int $step = 1): array
+    /**
+     * Create an array containing a range of elements
+     *
+     * @param int|float|null $step <p>
+     *     If a step value is given, it will be used as the increment between elements in the sequence.
+     *     step should be given as a positive number. If not specified, step will default to the smallest
+     *     step necessary.
+     * </p>
+     * @return array an array of elements from start to end, inclusive
+     */
+    public function getRange(int|float|null $step = null): array
     {
+        if ($step === null) {
+            $minFractionCount = $this->getFractionCount((float)$this->minimum);
+            $maxFractionCount = $this->getFractionCount((float)$this->maximum);
+            $fractionCount = max($minFractionCount, $maxFractionCount);
+            $step = pow(10, -$fractionCount);
+        }
+
         return range($this->getMinimum(), $this->getMaximum(), $step);
     }
 
-    public function getValue(int $step = 1): array
+    public function getValue(int|float|null $step = null): array
     {
         return $this->getRange($step);
     }
@@ -107,5 +124,21 @@ class QuantityValueRange extends AbstractQuantityValue
         }
 
         return sprintf('[%s, %s] %s', $minimum, $maximum, $unit);
+    }
+
+    /**
+     * Counts the decimal places of a float
+     *
+     * @param float $value
+     * @return int
+     */
+    private function getFractionCount(float $value): int
+    {
+        $numberString = strval($value);
+        if (strpos($numberString, '.') === false) {
+            return 0;
+        }
+        $fractions = explode('.', $numberString)[1];
+        return count(str_split($fractions));
     }
 }
